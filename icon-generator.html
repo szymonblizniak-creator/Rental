@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ikony aplikacji</title>
+<style>
+  :root{--ink:#3E2430;--soft:#7A5B66}
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;padding:24px 16px;
+    font-family:ui-sans-serif,system-ui,"Roboto",sans-serif;color:var(--ink);
+    background:linear-gradient(160deg,#FFE9C2,#FFC79A 28%,#FF9E86 58%,#EE7E9B 82%,#B879C9);
+    background-attachment:fixed}
+  .card{max-width:520px;margin:0 auto;padding:22px;border-radius:20px;
+    background:rgba(255,255,255,.38);backdrop-filter:blur(18px) saturate(150%);
+    -webkit-backdrop-filter:blur(18px) saturate(150%);
+    border:1px solid rgba(255,255,255,.55);box-shadow:0 10px 30px rgba(120,55,45,.14)}
+  h1{font-family:Georgia,serif;font-weight:500;font-size:24px;margin:0 0 6px}
+  p.lead{margin:0 0 20px;font-size:14px;color:var(--soft)}
+  label{display:block;font-size:10px;letter-spacing:.15em;text-transform:uppercase;
+    color:var(--soft);margin-bottom:5px}
+  .row{display:flex;gap:10px;margin-bottom:14px}
+  .col{flex:1}
+  input[type=text],input[type=color]{width:100%;border-radius:10px;padding:11px;font-size:16px;
+    color:var(--ink);background:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.75)}
+  input[type=color]{height:46px;padding:4px}
+  .preview{display:flex;align-items:center;gap:16px;margin:18px 0}
+  canvas#prev{width:96px;height:96px;border-radius:22px;box-shadow:0 8px 20px rgba(62,36,48,.3)}
+  .btns{flex:1;display:flex;flex-direction:column;gap:8px}
+  button{border:none;border-radius:12px;min-height:46px;font-size:15px;font-weight:500;
+    background:linear-gradient(135deg,var(--ink),#6A2F4C);color:#FFF3E4;
+    box-shadow:0 6px 16px rgba(62,36,48,.28)}
+  button:active{transform:scale(.98)}
+  ol{font-size:14px;color:var(--soft);line-height:1.65;padding-left:20px;margin:16px 0 0}
+  code{background:rgba(255,255,255,.55);padding:1px 6px;border-radius:5px;font-size:13px}
+  #scratch{display:none}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Ikony aplikacji</h1>
+  <p class="lead">Chrome na Androidzie potrzebuje ikon PNG, żeby zainstalować aplikację jako pełnoprawną. Wygeneruj je tutaj, wprost w telefonie.</p>
+
+  <div class="row">
+    <div class="col"><label>Znak</label><input type="text" id="letter" maxlength="2" value="R" /></div>
+    <div class="col"><label>Tło</label><input type="color" id="bg" value="#3E2430" /></div>
+    <div class="col"><label>Litera</label><input type="color" id="fg" value="#FFC79A" /></div>
+  </div>
+
+  <div class="preview">
+    <canvas id="prev" width="512" height="512"></canvas>
+    <div class="btns">
+      <button data-size="192" data-name="icon-192.png">Pobierz icon-192.png</button>
+      <button data-size="512" data-name="icon-512.png">Pobierz icon-512.png</button>
+    </div>
+  </div>
+
+  <ol>
+    <li>Pobierz oba pliki — trafią do <code>Pobrane</code></li>
+    <li>Wejdź na github.com do swojego repozytorium</li>
+    <li><strong>Add file → Upload files</strong>, wybierz oba PNG, <strong>Commit changes</strong></li>
+    <li>Odczekaj minutę i odśwież aplikację</li>
+  </ol>
+</div>
+<canvas id="scratch"></canvas>
+
+<script>
+var letter=document.getElementById("letter"),bg=document.getElementById("bg"),
+    fg=document.getElementById("fg"),prev=document.getElementById("prev"),
+    scratch=document.getElementById("scratch");
+
+function shade(hex,amt){
+  var num=parseInt(hex.slice(1),16),cl=function(v){return Math.max(0,Math.min(255,v));};
+  var r=cl((num>>16)+amt),g=cl(((num>>8)&255)+amt),b=cl((num&255)+amt);
+  return "#"+((r<<16)|(g<<8)|b).toString(16).padStart(6,"0");
+}
+function draw(cv,size){
+  cv.width=size;cv.height=size;
+  var ctx=cv.getContext("2d");
+  var grad=ctx.createLinearGradient(0,0,size,size);
+  grad.addColorStop(0,bg.value);grad.addColorStop(1,shade(bg.value,22));
+  ctx.fillStyle=grad;ctx.fillRect(0,0,size,size);
+  ctx.fillStyle=fg.value;ctx.textAlign="center";ctx.textBaseline="middle";
+  ctx.font="500 "+(size*0.5)+"px Georgia, serif";
+  ctx.fillText(letter.value||"R",size/2,size*0.54);
+}
+function refresh(){draw(prev,512);}
+[letter,bg,fg].forEach(function(el){el.addEventListener("input",refresh);});
+refresh();
+
+document.querySelectorAll("button[data-size]").forEach(function(btn){
+  btn.addEventListener("click",function(){
+    draw(scratch,+btn.dataset.size);
+    scratch.toBlob(function(blob){
+      var url=URL.createObjectURL(blob),a=document.createElement("a");
+      a.href=url;a.download=btn.dataset.name;
+      document.body.appendChild(a);a.click();a.remove();
+      setTimeout(function(){URL.revokeObjectURL(url);},1000);
+    },"image/png");
+  });
+});
+</script>
+</body>
+</html>
